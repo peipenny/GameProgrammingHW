@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+</style>
+</head>
+<body> 
+
+
+<script src="https://threejs.org/build/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+
+var renderer,camera,scene;
+var train;
+var angle = 0 ;
+
+init();
+animate();
+
+function init(){
+
+	clock = new THREE.Clock();
+	renderer = new THREE.WebGLRenderer({antialias:true});
+	renderer.setSize (window.innerWidth,window.innerHeight);
+	renderer.setClearColor(0x888888);
+	document.body.appendChild(renderer.domElement);
+	
+	camera = new THREE.PerspectiveCamera(50,window.innerWidth/window.innerHeight,1,1000);
+	camera.position.z = 150; // (0,0,50)
+	camera.position.y = 50; // (0,0,50)
+
+	var controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+	scene = new THREE.Scene();
+	var grid = new THREE.GridHelper(100,10,'red','white');
+	scene.add(grid);
+	/////////////////////////////
+	
+	//train = new THREE.Mesh( new THREE.SphereGeometry(10,20,20) , new THREE.MeshNormalMaterial());
+	object();
+	scene.add(train);
+	
+	//train.rotation.y=0;
+}
+
+function makeThomas() {
+	thomas = new THREE.Group();
+	let loader = new THREE.TextureLoader();
+	let texture = loader.load ("https://i.imgur.com/hALY9Ew.png");
+	//const points = [];
+	//points.push (new THREE.Vector2 (1.5,0), new THREE.Vector2(1.75, 0.5), new THREE.Vector2(1.75, 3.75), new THREE.Vector2(1.5, 4.5));
+
+	//const geometry = new THREE.LatheGeometry( points );
+	const geometry = new THREE.CylinderGeometry(1.75,1.75,2,64);
+	const material = new THREE.MeshBasicMaterial( { color:0x000000 } );
+	const body = new THREE.Mesh( geometry, material );
+	body.position.y = 4;
+
+	let face = new THREE.Mesh (new THREE.CircleGeometry (1.7,30), new THREE.MeshBasicMaterial({color : 0xffffff,side: THREE.DoubleSide}));
+
+	let texture2 = loader.load('https://i.imgur.com/Ev5Bs2U.png');
+	let buttom = new THREE.Mesh (new THREE.CircleGeometry (1.8,30), new THREE.MeshBasicMaterial({map:texture2,side: THREE.DoubleSide}));
+	
+	face.position.set (0,10,0);
+	face.rotation.x = -Math.PI/2;
+	buttom.rotation.x = -Math.PI/2;
+	buttom.rotation.z = -Math.PI/2;
+	buttom.position.y = 2.93;
+	
+	thomas.add (body,face,buttom);
+	thomas.rotation.z=Math.PI/2;
+	thomas.position.set(4.6,2.5,2);
+	
+	return thomas;
+}
+
+function object(){
+	
+	let loader = new THREE.TextureLoader();
+	
+	//------------- car body
+	let texture = loader.load ("https://i.imgur.com/iHw3ptX.jpeg");
+	var geometry1 = new THREE.BoxGeometry(6,4,4);
+	var material = new THREE.MeshBasicMaterial({map : texture,side: THREE.DoubleSide});
+	var body = new THREE.Mesh(geometry1,material);
+	body.position.set(-3,2.6,2);
+	
+
+	var geometry3 = new THREE.CylinderGeometry(0.75,0.75,1,64);
+	let texture3 = loader.load ("https://i.imgur.com/jlKxEXh.png");
+	var material3 = new THREE.MeshBasicMaterial({ map: texture3 , side:THREE.DoubleSide});
+	
+	var tire1 = new THREE.Mesh(geometry3,material3);
+	tire1.rotation.x=Math.PI/2;
+	tire1.position.set(-5.5,0.5,3.51);
+
+	var tire2 = tire1.clone();
+	tire2.position.set(-5.5,0.5,0.45);
+	
+	var tire3 = tire1.clone();
+	tire3.position.set(-0.5,0.5,0.45);
+	
+	var tire4 = tire1.clone();
+	tire4.position.set(-0.5,0.5,3.51);
+	
+	scene.add(makeThomas());
+	
+	train = new THREE.Object3D();
+	train.add(tire1,tire2,tire3,tire4,body,thomas);
+	scene.add(train);
+
+}
+
+function animate(){
+
+	var radius = 50 ;
+	train.position.set(-radius*Math.cos(angle) , 0,-radius * Math.sin(angle));
+	angle -= 0.01 ;
+
+	train.rotation.y = -angle+150;
+	var dt = clock.getDelta();
+	angle += 2 * 0.10472*dt;
+	
+	
+	renderer.render(scene,camera);
+	requestAnimationFrame(animate);
+}
+</script>
+</body>
+</html>
