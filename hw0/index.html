@@ -2,19 +2,39 @@
 <html>
 <head>
 <style>
+#heading {
+    position : absolute;
+    text-align : center;
+    width : 100vw;
+    bottom : 80vh;
+}
 </style>
 </head>
 <body> 
 
+<div id='heading'>
+  <button id='click'> Stop </button>
+</div>
 
-<script src="https://threejs.org/build/three.min.js"></script>
-<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+	<script src="https://threejs.org/build/three.min.js"></script>
+	<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/DDSLoader.js"></script>
+	<script src="https://raw.githack.com/mrdoob/three.js/dev/examples/js/loaders/MTLLoader.js"></script>
+	<script src="https://raw.githack.com/mrdoob/three.js/dev/examples/js/loaders/OBJLoader.js"></script>
 
 <script>
 
 var renderer,camera,scene;
-var train;
 var angle = 0 ;
+var thomas= new THREE.Object3D();;
+
+var tg = 0 ;
+$('#click').click(function(){
+	tg=! tg;
+	if(tg==1)cancelAnimationFrame(ani);
+	else animate();
+});
 
 init();
 animate();
@@ -38,94 +58,100 @@ function init(){
 	scene.add(grid);
 	/////////////////////////////
 	
-	//train = new THREE.Mesh( new THREE.SphereGeometry(10,20,20) , new THREE.MeshNormalMaterial());
-	object();
-	scene.add(train);
+	readModel('thomas');
 	
-	//train.rotation.y=0;
+	////////////light////////////////// 
+	
+	var ambient = new THREE.AmbientLight(0x444444);
+	scene.add(ambient);
+	var directionalLight = new THREE.DirectionalLight(0xffffff);
+	directionalLight.position.set(0, 0, 1).normalize();
+	scene.add(directionalLight);
+
+	var pointLight = new THREE.PointLight (0xffffff);
+	pointLight.position.set (100,200,-100);
+	scene.add (pointLight);
+	////////////////////////
+	
 }
 
-function makeThomas() {
-	thomas = new THREE.Group();
-	let loader = new THREE.TextureLoader();
-	let texture = loader.load ("https://i.imgur.com/hALY9Ew.png");
-	//const points = [];
-	//points.push (new THREE.Vector2 (1.5,0), new THREE.Vector2(1.75, 0.5), new THREE.Vector2(1.75, 3.75), new THREE.Vector2(1.5, 4.5));
+function readModel (modelName, targetSize=40) {
 
-	//const geometry = new THREE.LatheGeometry( points );
-	const geometry = new THREE.CylinderGeometry(1.75,1.75,2,64);
-	const material = new THREE.MeshBasicMaterial( { color:0x000000 } );
-	const body = new THREE.Mesh( geometry, material );
-	body.position.y = 4;
+  var onProgress = function(xhr) {
+    if (xhr.lengthComputable) {
+      var percentComplete = xhr.loaded / xhr.total * 100;
+      console.log(Math.round(percentComplete, 2) + '% downloaded');
+    }
+  };
 
-	let face = new THREE.Mesh (new THREE.CircleGeometry (1.7,30), new THREE.MeshBasicMaterial({color : 0xffffff,side: THREE.DoubleSide}));
+  var onError = function(xhr) {};
 
-	let texture2 = loader.load('https://i.imgur.com/Ev5Bs2U.png');
-	let buttom = new THREE.Mesh (new THREE.CircleGeometry (1.8,30), new THREE.MeshBasicMaterial({map:texture2,side: THREE.DoubleSide}));
-	
-	face.position.set (0,10,0);
-	face.rotation.x = -Math.PI/2;
-	buttom.rotation.x = -Math.PI/2;
-	buttom.rotation.z = -Math.PI/2;
-	buttom.position.y = 2.93;
-	
-	thomas.add (body,face,buttom);
-	thomas.rotation.z=Math.PI/2;
-	thomas.position.set(4.6,2.5,2);
-	
-	return thomas;
-}
+  var mtlLoader = new THREE.MTLLoader();
+  mtlLoader.setPath('models/');
+  mtlLoader.load(modelName+'.mtl', function(materials) {
 
-function object(){
-	
-	let loader = new THREE.TextureLoader();
-	
-	//------------- car body
-	let texture = loader.load ("https://i.imgur.com/iHw3ptX.jpeg");
-	var geometry1 = new THREE.BoxGeometry(6,4,4);
-	var material = new THREE.MeshBasicMaterial({map : texture,side: THREE.DoubleSide});
-	var body = new THREE.Mesh(geometry1,material);
-	body.position.set(-3,2.6,2);
-	
+    materials.preload();
 
-	var geometry3 = new THREE.CylinderGeometry(0.75,0.75,1,64);
-	let texture3 = loader.load ("https://i.imgur.com/jlKxEXh.png");
-	var material3 = new THREE.MeshBasicMaterial({ map: texture3 , side:THREE.DoubleSide});
+    var objLoader = new THREE.OBJLoader();
+    objLoader.setMaterials(materials);
+    objLoader.setPath('models/');
+    objLoader.load(modelName+'.obj', function(object) {
+		
+		let theObject =  unitize (object, targetSize);
+		theObject.add ( new THREE.BoxHelper (theObject) )
+		theObject.name = 'OBJ'
+		
+		thomas.add(theObject);
+		scene.add (thomas);
+		thomas.position.set(0,0,0);
 	
-	var tire1 = new THREE.Mesh(geometry3,material3);
-	tire1.rotation.x=Math.PI/2;
-	tire1.position.set(-5.5,0.5,3.51);
+    }, onProgress, onError);
 
-	var tire2 = tire1.clone();
-	tire2.position.set(-5.5,0.5,0.45);
-	
-	var tire3 = tire1.clone();
-	tire3.position.set(-0.5,0.5,0.45);
-	
-	var tire4 = tire1.clone();
-	tire4.position.set(-0.5,0.5,3.51);
-	
-	scene.add(makeThomas());
-	
-	train = new THREE.Object3D();
-	train.add(tire1,tire2,tire3,tire4,body,thomas);
-	scene.add(train);
+  });
 
 }
+
+function unitize (object, targetSize) {  
+	
+	// find bounding box of 'object'
+	var box3 = new THREE.Box3();
+	box3.setFromObject (object);
+	var size = new THREE.Vector3();
+	size.subVectors (box3.max, box3.min);
+	var center = new THREE.Vector3();
+	center.addVectors(box3.max, box3.min).multiplyScalar (0.5);	///更改位置
+	
+	console.log ('center: ' + center.x + ', '+center.y + ', '+center.z );
+	console.log ('size: ' + size.x + ', ' +  size.y + ', '+size.z );
+	
+	// uniform scaling according to objSize
+	var objSize = Math.max (size.x, size.y, size.z);
+	var scaleSet = targetSize/objSize;
+				
+	var theObject =  new THREE.Object3D();
+	theObject.add (object);
+	object.scale.set (scaleSet, scaleSet, scaleSet);
+	object.position.set (-center.x*scaleSet, -center.y*scaleSet, -center.z*scaleSet);
+	
+	return theObject;
+			
+}
+
+var ani;
 
 function animate(){
-
+	thomas.rotation.y = Math.PI/2;
 	var radius = 50 ;
-	train.position.set(-radius*Math.cos(angle) , 0,-radius * Math.sin(angle));
+	thomas.position.set(-radius*Math.cos(angle) , 20,-radius * Math.sin(angle));
 	angle -= 0.01 ;
 
-	train.rotation.y = -angle+150;
+	thomas.rotation.y = -angle+15;
 	var dt = clock.getDelta();
 	angle += 2 * 0.10472*dt;
 	
 	
 	renderer.render(scene,camera);
-	requestAnimationFrame(animate);
+	ani = requestAnimationFrame(animate);
 }
 </script>
 </body>
