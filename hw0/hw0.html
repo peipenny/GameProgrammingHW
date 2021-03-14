@@ -141,10 +141,10 @@ var state=1;
 
 function animate(){
 
-	var radius = 0.5 ;
+	var radius = 25 ;
 	var dt = clock.getDelta();
 	
-	console.log(dt);
+	//console.log(dt);
 	
 	if(state==1){
 		thomas.position.set(-radius*Math.cos(angle)-25 , 20,-radius * Math.sin(angle));
@@ -159,7 +159,7 @@ function animate(){
 		//右邊左轉彎 >18
 		thomas.position.set(-radius*Math.cos(angle)+25 , 20,-radius * Math.sin(angle));
 		thomas.rotation.y = -angle+Math.PI;
-		angle -= 10 * 0.10472*dt*1.7;
+		angle -= 10 * 0.10472*dt*1.65;
 		
 		if(thomas.position.x<25){
 			state = 4;
@@ -177,7 +177,7 @@ function animate(){
 	
 	else if(state==4){
 		//往左直走<18
-		thomas.position.x-= 25 * dt*1.7;
+		thomas.position.x-= 25 * dt*1.65;
 		if(thomas.position.x<-25){
 			state = 1;
 		}
