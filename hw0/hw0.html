@@ -15,7 +15,6 @@
 <div id='heading'>
   <button id='click'> Stop </button>
 </div>
-
 	<script src="https://threejs.org/build/three.min.js"></script>
 	<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
 	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
@@ -59,7 +58,7 @@ function init(){
 	/////////////////////////////
 	
 	readModel('thomas');
-	
+	thomas.rotation.y = Math.PI;
 	////////////light////////////////// 
 	
 	var ambient = new THREE.AmbientLight(0x444444);
@@ -98,12 +97,12 @@ function readModel (modelName, targetSize=40) {
     objLoader.load(modelName+'.obj', function(object) {
 		
 		let theObject =  unitize (object, targetSize);
-		theObject.add ( new THREE.BoxHelper (theObject) )
+		//theObject.add ( new THREE.BoxHelper (theObject) )
 		theObject.name = 'OBJ'
 		
 		thomas.add(theObject);
 		scene.add (thomas);
-		thomas.position.set(0,0,0);
+		//thomas.position.set(0,0,0);
 	
     }, onProgress, onError);
 
@@ -119,13 +118,13 @@ function unitize (object, targetSize) {
 	var size = new THREE.Vector3();
 	size.subVectors (box3.max, box3.min);
 	var center = new THREE.Vector3();
-	center.addVectors(box3.max, box3.min).multiplyScalar (0.5);	///更改位置
+	center.addVectors(box3.max, box3.min).multiplyScalar (1.7);	///更改位置
 	
 	console.log ('center: ' + center.x + ', '+center.y + ', '+center.z );
 	console.log ('size: ' + size.x + ', ' +  size.y + ', '+size.z );
 	
 	// uniform scaling according to objSize
-	var objSize = Math.max (size.x, size.y, size.z);
+	var objSize = Math.max (size.x*2, size.y*2, size.z*2);
 	var scaleSet = targetSize/objSize;
 				
 	var theObject =  new THREE.Object3D();
@@ -138,17 +137,51 @@ function unitize (object, targetSize) {
 }
 
 var ani;
+var state=1;
 
 function animate(){
-	thomas.rotation.y = Math.PI/2;
-	var radius = 50 ;
-	thomas.position.set(-radius*Math.cos(angle) , 20,-radius * Math.sin(angle));
-	angle -= 0.01 ;
 
-	thomas.rotation.y = -angle+15;
+	var radius = 0.5 ;
 	var dt = clock.getDelta();
-	angle += 2 * 0.10472*dt;
 	
+	console.log(dt);
+	
+	if(state==1){
+		thomas.position.set(-radius*Math.cos(angle)-25 , 20,-radius * Math.sin(angle));
+		thomas.rotation.y = -angle+Math.PI;
+		angle -= 10 * 0.10472*dt*1.65;	//每秒60*1.7度  = 3.529秒一圓 
+		//左邊左轉彎 <-18
+		if(thomas.position.x>-25){
+			state = 3;
+		}
+	}
+	else if(state==2){
+		//右邊左轉彎 >18
+		thomas.position.set(-radius*Math.cos(angle)+25 , 20,-radius * Math.sin(angle));
+		thomas.rotation.y = -angle+Math.PI;
+		angle -= 10 * 0.10472*dt*1.7;
+		
+		if(thomas.position.x<25){
+			state = 4;
+		}
+	}
+	else if(state==3){
+		
+		thomas.position.x+= 25 *dt*1.65; // 0.4 * 1.7 = 0.68 per 0.016 sec  => 100 / 0.68 * 0.016 = 2.352
+		//往右直走>-18
+		if(thomas.position.x>25){
+			state=2;
+		}
+		
+	}
+	
+	else if(state==4){
+		//往左直走<18
+		thomas.position.x-= 25 * dt*1.7;
+		if(thomas.position.x<-25){
+			state = 1;
+		}
+	}
 	
 	renderer.render(scene,camera);
 	ani = requestAnimationFrame(animate);
