@@ -61,26 +61,26 @@ class Puck {
 			this.vel.z = - this.vel.z;
 		 
 			this.pos.z = -100+R;
-			Sound.play();
+			//Sound.play();
 		}
 		if (this.pos.z > 100-R) {
 			this.vel.z = - this.vel.z;
 			
 			this.pos.z = 100-R;
-			Sound.play();
+			//Sound.play();
 		}
 		
 		if (this.pos.x > 100-R) {
 			this.vel.x = - this.vel.x;
 			this.force = this.force.multiplyScalar(-0.1);
 			this.pos.x = 100-R;
-			Sound.play();
+			//Sound.play();
 		}
 		if (this.pos.x < -100+R) {
 			this.vel.x = - this.vel.x;
 			this.force = this.force.multiplyScalar(-0.1);
 			this.pos.x = -100+R;
-			Sound.play();
+			//Sound.play();
 		}
 		
 		this.mesh.position.copy (this.pos);
@@ -199,12 +199,24 @@ function animate(){
 		for(let j= i+1 ; j < pucks.length ; j++){
 			var k = Math.sqrt(Math.pow(pucks[i].pos.x - pucks[j].pos.x,2)+ Math.pow(pucks[i].pos.z - pucks[j].pos.z ,2));
 			if(k<=2*R){
-				pucks[i].vel.x = - pucks[i].vel.x;
-				pucks[i].vel.z = - pucks[i].vel.z;
-				pucks[j].vel.x = - pucks[j].vel.x;
-				pucks[j].vel.z = - pucks[j].vel.z;
-				pucks[i].force = pucks[i].force.multiplyScalar(-0.1);
-				pucks[j].force = pucks[j].force.multiplyScalar(-0.1);
+				let v1 = pucks[i].vel.clone().add(pucks[j].vel.clone().negate());
+				let v2 = pucks[j].vel.clone().add(pucks[i].vel.clone().negate());
+				let x1 = pucks[i].pos.clone().add(pucks[j].pos.clone().negate());
+				let x2 = pucks[j].pos.clone().add(pucks[i].pos.clone().negate());
+				
+				let a = v1.dot(x1);
+				let b = v2.dot(x2);
+				let k = x1.lengthSq();
+				a = a/k;
+				b = b/k;
+				// 純量 a,b 
+				x1 = x1.multiplyScalar(a).negate();
+				x2 = x2.multiplyScalar(b).negate();
+				
+				
+				pucks[i].vel = pucks[i].vel.add(x1);
+				pucks[j].vel = pucks[j].vel.add(x2);
+				
 				break;
 			}
 		}
