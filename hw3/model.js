@@ -1,6 +1,6 @@
 
 
-function buildHead2(WW, HH, DD) {
+function buildHead(WW, HH, DD) {
 
 	var geometry = new THREE.BufferGeometry();	
 	var vertices = [];
