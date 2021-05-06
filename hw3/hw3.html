@@ -39,10 +39,20 @@ const WW = 10,HH = 12;
 
 var walk = false;
 var clock = new THREE.Clock();
-var ts;// = -1; // ts < 0 --> not yet started
+var ts;
 var state = 'Stand';
 var minecraft = new THREE.Group();
 var head,leg1,leg2,hand1,hand2;
+
+////////////////////////
+
+var pos = new THREE.Vector3();
+var speed, angle, vel;
+(function() {
+	Math.clamp = function(val,min,max){
+    return Math.min(Math.max(val,min),max);
+}})();
+
 
 /// gyro view click
 var tg = 0 ;
@@ -86,8 +96,7 @@ function init(){
 	
 	var loader = new THREE.TextureLoader();
 	loader.setCrossOrigin('');
-	texture = loader.load ('https://i.imgur.com/IejOuMK.png');
-	
+	texture = loader.load ('https://i.imgur.com/ifFd1kO.png');
 	
 	let body = buildBody(12.4,19.1,6.2);
 	
@@ -108,7 +117,7 @@ function init(){
 	
 	minecraft.add(body,head,leg1,leg2,hand1,hand2);
 	scene.add(minecraft);
-	minecraft.rotation.y = -Math.PI;
+	minecraft.rotation.y = Math.PI/2;
 
 	//window.addEventListener('resize', onWindowResize, false);
 	
@@ -135,7 +144,28 @@ function init(){
 
 	state = 'Stand';
 	ts = clock.getElapsedTime();
+	speed = 5.0;
+	angle = 0.0;
+}
+
+function update(dt) {
+
+	keyboard.update();
+	if ( keyboard.pressed("left") ) 
+		angle += 0.01;               
+	if ( keyboard.pressed("right") )
+		angle -= 0.01;               
+	if ( keyboard.pressed("up") )  
+		speed += 0.5;        
+	if ( keyboard.pressed("down") )  
+		speed -= 0.5;    
+
+	speed = Math.clamp (speed, 0.1, 20.0);		
+	vel = new THREE.Vector3(speed,0,0);
 	
+	vel.applyAxisAngle (new THREE.Vector3(0,1,0), angle);
+	pos.add (vel.clone().multiplyScalar(dt));
+	pos.y = 25.65;
 }
 
 var theta = 0 ;
@@ -155,72 +185,32 @@ function animate(){
 		leg2.rotation.x = intKey[1];
 	}
 	if (keyboard.up('space')) { // move to stand
-		walk = false;
-		leg1.rotation.x = 0;
-		leg2.rotation.x = 0;
-		hand1.rotation.x = 0;
-		hand2.rotation.x = 0;
+
 	}
 	if(walk){
-		var radius = 25 ;
+	
 		var dt = clock.getDelta();
-		let R = 50;
-		let omega = HH/R/T; 
-		
 		let intKey;
 		switch (state) {
 			case 'Stand':
-			  console.log('... in stand');
+			  //console.log('... in stand');
 			  intKey = keyframeStand(clock.getElapsedTime(), TStand);
 			  break;
-			case 'S2W':
-			  theta += omega*dt*8/3;
-			  var count = theta/ (2*Math.PI);
-			  console.log('... in S2W');
-			  intKey = keyframeS2W(clock.getElapsedTime(), TS2W); 
-			  if(count%2 < 1){
-				minecraft.position.set(radius*Math.cos(theta)-25 , 25.65,-radius * Math.sin(theta));
-				minecraft.rotation.y = theta+Math.PI;
-				leg1.rotation.x = intKey[0];	
-				leg2.rotation.x = intKey[1]; 
-				hand2.rotation.x = intKey[0];
-				hand1.rotation.x = intKey[1];
-			  }
-			  else{
-				 theta += omega*dt*2/3;
-				 minecraft.position.set(-radius/2*Math.sin(theta + Math.PI/2)+12.5,25.65,radius/2*Math.cos(theta+Math.PI/2));
-				 minecraft.rotation.y = -(theta +Math.PI);
-				 leg1.rotation.x = intKey[0];
-				 leg2.rotation.x = intKey[1];
-				 hand2.rotation.x = intKey[0];
-				 hand1.rotation.x = intKey[1];
-			  }  
-			  
+			case 'S2W':			
+			  //console.log('... in S2W');
+				intKey = keyframeS2W(clock.getElapsedTime(), TS2W); 
+				update(dt);		  
 			  break;
 			case 'Walk':
-			  theta += omega*dt*8/2;
-			  var count = theta/ (2*Math.PI);
 			  console.log('... in walk');
 			  intKey = keyframeWalk(clock.getElapsedTime(), TWalk);
-			  if(count%2 < 1){
-				minecraft.position.set(radius*Math.cos(theta)-25 , 25.65,-radius * Math.sin(theta));
-				minecraft.rotation.y = theta+Math.PI;
-				leg1.rotation.x = intKey[0];	
-				leg2.rotation.x = intKey[1]; 
-				hand2.rotation.x = intKey[0];
-				hand1.rotation.x = intKey[1];
-			  }
-			  else{
-				 theta += omega*dt*2;
-				 minecraft.position.set(-radius/2*Math.sin(theta + Math.PI/2)+12.5,25.65,radius/2*Math.cos(theta+Math.PI/2));
-				 minecraft.rotation.y = -(theta +Math.PI);
-				 leg1.rotation.x = intKey[0];
-				 leg2.rotation.x = intKey[1];
-				 hand2.rotation.x = intKey[0];
-				 hand1.rotation.x = intKey[1];
-			  }  
+			  update(dt);
 			  break;
 		}
+		minecraft.position.copy(pos);
+		minecraft.rotation.y = angle+Math.PI/2;
+		hand1.rotation.x = intKey[1];
+		hand2.rotation.x = intKey[0];
 		leg1.rotation.x = intKey[0];
 		leg2.rotation.x = intKey[1];
 	}
