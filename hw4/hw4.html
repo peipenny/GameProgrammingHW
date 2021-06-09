@@ -151,6 +151,7 @@ class Agent {
 					}
 				}
 				if(dst<k){
+					console.log(k+",separation part");
 					let push = new THREE.Vector3();
 					for (let i = 0; i < this.nbhd.length; i++) {
 						let point = this.pos.clone().sub(this.nbhd[i].pos);
@@ -159,6 +160,7 @@ class Agent {
 					this.force.add(push);
 				}
 				else{
+					console.log(k+",cohesion part");
 					total.multiplyScalar(1/this.nbhd.length);	// 算出 nbhd的平均位置
 					total = this.targetInducedForce(total);	// 利用 targetInducedForce （來吸引 this 往平均位置靠近）	
 					this.force.add(total);		// 將此力加到 this.force
@@ -198,12 +200,12 @@ function findNbhd(agents) {
 
 $('#click').click(function(){
 	k+=1;
-	console.log(k);
+	
 });
 
 $('#click2').click(function(){
 	k-=1;
-	console.log(k);
+	//console.log(k);
 });
 
 ////////////////////
