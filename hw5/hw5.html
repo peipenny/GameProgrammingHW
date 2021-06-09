@@ -37,7 +37,7 @@ class Agent {
 		this.target = null;
 		this.mesh = mesh;
 		scene.add (mesh);
-		this.MAXSPEED = 5;
+		this.MAXSPEED = 10;
 		this.nhbd  = [];
 
 	}
@@ -86,7 +86,7 @@ class Agent {
 		}
 
 		let pHat = pE.clone().sub(pS).normalize();
-		let posF = agent.pos.clone().add(agent.vel);
+		let posF = this.pos.clone().add(this.vel);
 		let tmp = posF.clone().sub(pS);
 		let proj = pHat.multiplyScalar(tmp.dot(pHat)).add(pS);
 		let distance = posF.distanceTo(proj);
@@ -95,7 +95,15 @@ class Agent {
 			this.force.add(correction);
 		}
 		
-	
+		if (this.nbhd.length > 0) {
+			let push = new THREE.Vector3();
+			for (let i = 0; i < this.nbhd.length; i++) {
+				let point = this.pos.clone().sub(this.nbhd[i].pos);
+				push.add(point.setLength(0.12/ point.length()));
+			}
+			this.force.add(push);
+		}
+		
 	}
 	
 	distanceTo(otherAgent) {
@@ -117,7 +125,7 @@ function findNbhd(agents) {
 	for (i = 0; i < nAgents - 1; i++) {
 		for (j = i + 1; j < nAgents; j++) {
 			dst = agents[i].distanceTo(agents[j]);
-			if (dst < 20) { // NBHD = 20
+			if (dst < 20) { 	// NBHD = 20
 				agents[i].addNbr(agents[j])
 				agents[j].addNbr(agents[i])
 			}
@@ -150,8 +158,6 @@ function init() {
 
 	setTimeout(addAgent,1000);
 	////////////////////////////////////
-
-	///////////////////////////////////
 	
 	addPath();
 	addPath2();
@@ -181,7 +187,6 @@ function addPath(){
 	
 	scene.add(paths);
 
-	//return paths;
 
 }
 
@@ -209,8 +214,6 @@ function addPath2(){
 	paths.add(path,end,end2);
 	
 	scene.add(paths);
-
-	//return paths;
 
 }
 
@@ -246,13 +249,13 @@ function addPath3(){
 function addAgent(){
 	let randColor = Math.random()*0xffffff;
 	let circle = new THREE.Mesh (new THREE.CircleGeometry(1,20), new THREE.MeshBasicMaterial({color:randColor}));
-
+	
 	let pos = new THREE.Vector3(0,(-1+Math.random()*2)*4,0);
 
 	agent = new Agent (pos, circle);
 	agent.vel.set (4,-4,0);
 	agents.push(agent);
-	if(agents.length<4)
+	//if(agents.length<20)
 		setTimeout(addAgent,1000);
 
 }
@@ -262,7 +265,7 @@ function animate() {
 	requestAnimationFrame(animate);
 	render();
 	
-	//findNbhd(agents);
+	findNbhd(agents);
 
 	let dt = 0.1;
 	agents.forEach(function(agent){
